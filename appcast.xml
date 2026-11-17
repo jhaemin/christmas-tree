@@ -5,5 +5,39 @@
   <channel>
     <title>Christmas Tree</title>
     <link>https://github.com/jhaemin/christmas-tree</link>
+    <item>
+      <title>Christmas Tree v1.0.0</title>
+      <link>https://github.com/jhaemin/christmas-tree/releases/tag/v1.0.0</link>
+      <pubDate>Tue, 17 Nov 2026 07:00:35 +0000</pubDate>
+      <description xml:lang="en"><![CDATA[
+<h2>1.0.0</h2>
+<p>The first release.</p>
+<ul>
+<li>A small Christmas tree that floats above every window, on every desktop and over full-screen apps. Drag it anywhere and it stays there.</li>
+<li>14 tree designs, from Classic Red &amp; Gold to Gold Wire, drawn branch by branch with twinkling lights and a glowing star.</li>
+<li>Snowfall around the tree, on or off.</li>
+<li>Christmas carols played on a synthesized music box: Jingle Bells, We Wish You a Merry Christmas, Deck the Halls, Silent Night, and Joy to the World.</li>
+<li>English and Korean, following the macOS language.</li>
+<li>Automatic updates.</li>
+</ul>      ]]></description>
+      <description xml:lang="ko"><![CDATA[
+<h2>1.0.0</h2>
+<p>첫 릴리스입니다.</p>
+<ul>
+<li>모든 창 위, 모든 데스크탑과 전체화면 앱 위에 떠 있는 작은 크리스마스 트리. 드래그해서 원하는 곳에 두면 그 자리를 기억합니다.</li>
+<li>클래식 레드 &amp; 골드부터 골드 와이어까지 14가지 트리 디자인. 가지 하나하나 그려 반짝이는 전구와 빛나는 별을 달았습니다.</li>
+<li>트리 주변에 내리는 눈, 켜고 끌 수 있습니다.</li>
+<li>오르골 음색으로 연주하는 캐럴: Jingle Bells, We Wish You a Merry Christmas, Deck the Halls, Silent Night, Joy to the World.</li>
+<li>macOS 언어에 따라 영어와 한국어로 표시됩니다.</li>
+<li>자동 업데이트.</li>
+</ul>      ]]></description>
+      <sparkle:version>3</sparkle:version>
+      <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url="https://github.com/jhaemin/christmas-tree/releases/download/v1.0.0/ChristmasTree.zip"
+        sparkle:edSignature="sQPS8drPPZXeTXhhmDLM6w6rr/inr5+9h+jv0jbNm6+zyt/bDIBQrXdvru8FOX9zzlhFpEUZeWCfaorh4fSOAw==" length="3473458"
+        type="application/octet-stream"/>
+    </item>
   </channel>
 </rss>

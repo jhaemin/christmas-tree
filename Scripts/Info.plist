@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleAlternateNames</key>
+	<array>
+		<string>크리스마스 트리</string>
+		<string>크리스마스</string>
+		<string>트리</string>
+		<string>Christmas</string>
+	</array>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>Christmas Tree</string>
+	<key>CFBundleExecutable</key>
+	<string>ChristmasTree</string>
+	<key>CFBundleIdentifier</key>
+	<string>dev.jhaemin.ChristmasTree</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>ko</string>
+	</array>
+	<key>CFBundleName</key>
+	<string>Christmas Tree</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.entertainment</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>26.0</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://raw.githubusercontent.com/jhaemin/christmas-tree/main/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>231/UKP6u5LElqtTkMp2TwNDsr83lQSxVCiJ4UUMR7I=</string>
+</dict>
+</plist>

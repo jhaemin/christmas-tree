@@ -1,0 +1,55 @@
+/* Christmas Tree 한국어 — 영어 원문이 키입니다 (Localization.swift 참고) */
+
+/* 메뉴 */
+"Christmas Tree" = "크리스마스 트리";
+"Merry Christmas!" = "메리 크리스마스!";
+"1 day until Christmas" = "크리스마스까지 1일";
+"%d days until Christmas" = "크리스마스까지 %d일";
+"Tree Design (%@)" = "트리 디자인 (%@)";
+"Next Design" = "다음 디자인";
+"Previous Design" = "이전 디자인";
+"Random Design" = "랜덤 디자인";
+"Snowfall" = "눈 내리기";
+"Play Music" = "음악 재생";
+"Play All" = "전체 연속 재생";
+"Song" = "곡 선택";
+"Volume" = "음량";
+"Size" = "크기";
+"Always on Top" = "항상 맨 위에 표시";
+"Launch at Login" = "로그인 시 자동 실행";
+"Reset Position" = "위치 초기화";
+"Check for Updates…" = "업데이트 확인…";
+"Quit Christmas Tree" = "종료";
+"Couldn’t change the login item" = "로그인 항목을 변경하지 못했어요";
+"Move the app to the Applications folder and try again." = "앱을 /Applications 폴더로 옮긴 뒤 다시 시도해 주세요.";
+
+/* 크기 */
+"Small" = "작게";
+"Medium" = "보통";
+"Large" = "크게";
+"Extra Large" = "아주 크게";
+
+/* 음량 */
+"Quiet" = "작게";
+"Normal" = "보통";
+"Loud" = "크게";
+
+/* 처음 실행 안내 */
+"Drag to move" = "드래그해서 옮기기";
+"Double-click: next tree · Right-click: menu" = "더블클릭: 다음 트리 · 우클릭: 메뉴";
+
+/* 트리 디자인 */
+"Classic Red & Gold" = "클래식 레드 & 골드";
+"Snowy Fir" = "눈 덮인 전나무";
+"Champagne Gold" = "샴페인 골드";
+"Burgundy Velvet" = "버건디 벨벳";
+"Silver & Blue" = "실버 & 블루";
+"White Flocked" = "화이트 플로킹";
+"Nordic Wood" = "노르딕 우드";
+"Warm Glow" = "웜 라이트";
+"Vintage Bulbs" = "빈티지 전구";
+"Emerald & Gold" = "에메랄드 & 골드";
+"Gifts Galore" = "선물 한가득";
+"Blue Spruce" = "블루 스프루스";
+"Spiral Lights" = "회전 조명";
+"Gold Wire" = "골드 와이어";

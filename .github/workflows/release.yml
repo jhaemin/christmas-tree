@@ -1,0 +1,193 @@
+name: Release
+
+# Push a tag like v1.0.1 to build, sign, notarize, publish a GitHub release,
+# and append the update to appcast.xml (Sparkle). Run it by hand
+# (workflow_dispatch) for a dry run: the app is built and kept as an
+# artifact, nothing is published.
+#
+# Repository secrets (each step activates once its secrets exist; without
+# them the build stays ad-hoc signed and the appcast is not updated):
+#   DEVELOPER_ID_P12, DEVELOPER_ID_P12_PASSWORD   Developer ID certificate
+#   NOTARY_KEY_P8, NOTARY_KEY_ID, NOTARY_ISSUER_ID  App Store Connect API key
+#   SPARKLE_ED_PRIVATE_KEY   private half of SUPublicEDKey in Scripts/Info.plist
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    # The package targets macOS 26, so the build needs the macOS 26 SDK.
+    runs-on: macos-26
+
+    env:
+      APP: ChristmasTree
+      HAVE_CERT: ${{ secrets.DEVELOPER_ID_P12 != '' }}
+      HAVE_NOTARY: ${{ secrets.NOTARY_KEY_P8 != '' }}
+      HAVE_SPARKLE: ${{ secrets.SPARKLE_ED_PRIVATE_KEY != '' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      # Fail before building anything if the version has no changelog entry
+      # in both languages. The appcast description carries this version and
+      # the two before it, so someone who skipped a release still reads
+      # what changed in between.
+      - name: Extract release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION=$(awk '/^## /{print $2; exit}' CHANGELOG.md)
+            echo "Dry run: using the newest changelog section, $VERSION"
+          fi
+          ./Scripts/changelog-extract.sh "$VERSION" > "$RUNNER_TEMP/notes.md"
+          ./Scripts/changelog-extract.sh "$VERSION" CHANGELOG.ko.md > "$RUNNER_TEMP/notes.ko.md"
+
+          recent() {
+            awk -v ver="$VERSION" -v max=3 '
+              BEGIN { split(ver, v, "."); major = v[1] }
+              /^## / {
+                if ($2 == ver) found = 1
+                if (found) { split($2, h, "."); if (h[1] != major) exit; n++; if (n > max) exit }
+              }
+              found { print }
+            ' "$1"
+          }
+          recent CHANGELOG.md > "$RUNNER_TEMP/notes-recent.md"
+          recent CHANGELOG.ko.md > "$RUNNER_TEMP/notes-recent.ko.md"
+
+          gh api markdown -f mode=gfm -f text="$(cat "$RUNNER_TEMP/notes-recent.md")" \
+            > "$RUNNER_TEMP/notes.html"
+          gh api markdown -f mode=gfm -f text="$(cat "$RUNNER_TEMP/notes-recent.ko.md")" \
+            > "$RUNNER_TEMP/notes.ko.html"
+          cat "$RUNNER_TEMP/notes.html" "$RUNNER_TEMP/notes.ko.html"
+
+      - name: Stamp version from tag
+        if: github.ref_type == 'tag'
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" Scripts/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $GITHUB_RUN_NUMBER" Scripts/Info.plist
+
+      - name: Import Developer ID certificate
+        if: env.HAVE_CERT == 'true'
+        env:
+          DEVELOPER_ID_P12: ${{ secrets.DEVELOPER_ID_P12 }}
+          DEVELOPER_ID_P12_PASSWORD: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
+        run: |
+          KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
+          KEYCHAIN_PASSWORD=$(uuidgen)
+          echo "$DEVELOPER_ID_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$RUNNER_TEMP/cert.p12" -P "$DEVELOPER_ID_P12_PASSWORD" \
+            -A -t cert -f pkcs12 -k "$KEYCHAIN"
+          security set-key-partition-list -S apple-tool:,apple: \
+            -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" > /dev/null
+          security list-keychains -d user -s "$KEYCHAIN" login.keychain
+          rm "$RUNNER_TEMP/cert.p12"
+          echo "CODESIGN_IDENTITY=Developer ID Application" >> "$GITHUB_ENV"
+
+      - name: Build app bundle
+        run: ./Scripts/bundle.sh
+
+      # Launch the exact artifact about to ship and require it to survive
+      # its first seconds.
+      - name: Smoke-test the launch
+        run: |
+          "build/$APP.app/Contents/MacOS/$APP" &
+          APP_PID=$!
+          sleep 5
+          if ! kill -0 "$APP_PID" 2>/dev/null; then
+            STATUS=0; wait "$APP_PID" || STATUS=$?
+            echo "::error::$APP crashed within 5 seconds of launch (exit status $STATUS)"
+            exit 1
+          fi
+          kill "$APP_PID"
+
+      - name: Zip app
+        run: ditto -c -k --sequesterRsrc --keepParent "build/$APP.app" "$APP.zip"
+
+      - name: Notarize and staple
+        if: env.HAVE_CERT == 'true' && env.HAVE_NOTARY == 'true'
+        env:
+          NOTARY_KEY_P8: ${{ secrets.NOTARY_KEY_P8 }}
+          NOTARY_KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
+          NOTARY_ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
+        run: |
+          echo "$NOTARY_KEY_P8" > "$RUNNER_TEMP/notary.p8"
+          xcrun notarytool submit "$APP.zip" \
+            --key "$RUNNER_TEMP/notary.p8" \
+            --key-id "$NOTARY_KEY_ID" \
+            --issuer "$NOTARY_ISSUER_ID" \
+            --wait
+          xcrun stapler staple "build/$APP.app"
+          spctl -a -t exec -vv "build/$APP.app"
+          ditto -c -k --sequesterRsrc --keepParent "build/$APP.app" "$APP.zip"
+
+      - name: Create GitHub Release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          NOTES_FILE="$RUNNER_TEMP/notes.md"
+          if [[ -z "${CODESIGN_IDENTITY:-}" ]]; then
+            {
+              printf '%s\n' \
+                '> [!IMPORTANT]' \
+                '> This build is ad-hoc signed (no Developer ID / notarization), so' \
+                '> Gatekeeper will block the first launch. After unzipping, either' \
+                '> right-click → Open, or run:' \
+                "> \`xattr -d com.apple.quarantine $APP.app\`" \
+                ''
+              cat "$RUNNER_TEMP/notes.md"
+            } > "$RUNNER_TEMP/notes-unsigned.md"
+            NOTES_FILE="$RUNNER_TEMP/notes-unsigned.md"
+          fi
+          gh release create "$GITHUB_REF_NAME" "$APP.zip#$APP.app ($VERSION)" \
+            --title "Christmas Tree $GITHUB_REF_NAME" \
+            --notes-file "$NOTES_FILE"
+
+      # Sign the zip with the Sparkle EdDSA key and append it to the appcast
+      # on main. Runs after the release exists so the enclosure never 404s.
+      - name: Update appcast
+        if: github.ref_type == 'tag' && env.HAVE_SPARKLE == 'true'
+        env:
+          SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          curl -sSfL -o "$RUNNER_TEMP/sparkle.tar.xz" \
+            "https://github.com/sparkle-project/Sparkle/releases/download/2.9.6/Sparkle-2.9.6.tar.xz"
+          mkdir -p "$RUNNER_TEMP/sparkle"
+          tar -xf "$RUNNER_TEMP/sparkle.tar.xz" -C "$RUNNER_TEMP/sparkle"
+          SIGNATURE=$(printf '%s' "$SPARKLE_ED_PRIVATE_KEY" \
+            | "$RUNNER_TEMP/sparkle/bin/sign_update" --ed-key-file - "$APP.zip")
+          git fetch origin main
+          git checkout -f -B main origin/main
+          ./Scripts/appcast-add.sh "$VERSION" "$GITHUB_RUN_NUMBER" "$SIGNATURE" \
+            "$RUNNER_TEMP/notes.html" "$RUNNER_TEMP/notes.ko.html"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add appcast.xml
+          git commit -m "Publish v$VERSION to appcast"
+          git push origin main
+
+      - name: Upload artifact
+        if: github.ref_type != 'tag'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP }}.app
+          path: ${{ env.APP }}.zip

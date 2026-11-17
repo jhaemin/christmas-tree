@@ -39,5 +39,65 @@
         sparkle:edSignature="sQPS8drPPZXeTXhhmDLM6w6rr/inr5+9h+jv0jbNm6+zyt/bDIBQrXdvru8FOX9zzlhFpEUZeWCfaorh4fSOAw==" length="3473458"
         type="application/octet-stream"/>
     </item>
+    <item>
+      <title>Christmas Tree v1.0.1</title>
+      <link>https://github.com/jhaemin/christmas-tree/releases/tag/v1.0.1</link>
+      <pubDate>Tue, 17 Nov 2026 07:21:21 +0000</pubDate>
+      <description xml:lang="en"><![CDATA[
+<h2>1.0.1</h2>
+<h3>Added</h3>
+<ul>
+<li>Velvet bows with gold edges on Classic Red &amp; Gold and Burgundy Velvet.</li>
+<li>Fluted ornaments on Classic Red &amp; Gold and Champagne Gold.</li>
+</ul>
+<h3>Changed</h3>
+<ul>
+<li>Finer, softer needles and a fresher green, so the branches look more like a real fir.</li>
+<li>Ornaments are spread evenly from the bottom of the tree to the top, with small ones near the tip, and keep the same places at every tree size.</li>
+<li>Classic Red &amp; Gold has more lights and new ornament colors, and every star is a little smaller.</li>
+<li>The app is now called "Christmas Tree" in Finder, Launchpad, and the Dock (it was "ChristmasTree"). Copies updated from 1.0.0 rename themselves on their next launch.</li>
+</ul>
+<h2>1.0.0</h2>
+<p>The first release.</p>
+<ul>
+<li>A small Christmas tree that floats above every window, on every desktop and over full-screen apps. Drag it anywhere and it stays there.</li>
+<li>14 tree designs, from Classic Red &amp; Gold to Gold Wire, drawn branch by branch with twinkling lights and a glowing star.</li>
+<li>Snowfall around the tree, on or off.</li>
+<li>Christmas carols played on a synthesized music box: Jingle Bells, We Wish You a Merry Christmas, Deck the Halls, Silent Night, and Joy to the World.</li>
+<li>English and Korean, following the macOS language.</li>
+<li>Automatic updates.</li>
+</ul>      ]]></description>
+      <description xml:lang="ko"><![CDATA[
+<h2>1.0.1</h2>
+<h3>추가</h3>
+<ul>
+<li>클래식 레드 &amp; 골드와 버건디 벨벳에 금색 테두리의 벨벳 리본을 달았습니다.</li>
+<li>클래식 레드 &amp; 골드와 샴페인 골드에 골이 진 오너먼트가 추가되었습니다.</li>
+</ul>
+<h3>변경</h3>
+<ul>
+<li>바늘잎을 더 가늘고 부드럽게, 초록색을 더 싱그럽게 다듬어 진짜 전나무에 가까워졌습니다.</li>
+<li>오너먼트가 트리 아래부터 꼭대기까지 고르게 달리고(꼭대기에는 작은 장식), 트리 크기를 바꿔도 같은 자리에 있습니다.</li>
+<li>클래식 레드 &amp; 골드의 전구가 늘고 오너먼트 색이 바뀌었으며, 모든 별이 조금 작아졌습니다.</li>
+<li>Finder, Launchpad, Dock에 보이는 앱 이름이 "ChristmasTree"에서 "Christmas Tree"로 바뀌었습니다. 1.0.0에서 업데이트한 앱은 다음 실행 때 스스로 이름을 바꿉니다.</li>
+</ul>
+<h2>1.0.0</h2>
+<p>첫 릴리스입니다.</p>
+<ul>
+<li>모든 창 위, 모든 데스크탑과 전체화면 앱 위에 떠 있는 작은 크리스마스 트리. 드래그해서 원하는 곳에 두면 그 자리를 기억합니다.</li>
+<li>클래식 레드 &amp; 골드부터 골드 와이어까지 14가지 트리 디자인. 가지 하나하나 그려 반짝이는 전구와 빛나는 별을 달았습니다.</li>
+<li>트리 주변에 내리는 눈, 켜고 끌 수 있습니다.</li>
+<li>오르골 음색으로 연주하는 캐럴: Jingle Bells, We Wish You a Merry Christmas, Deck the Halls, Silent Night, Joy to the World.</li>
+<li>macOS 언어에 따라 영어와 한국어로 표시됩니다.</li>
+<li>자동 업데이트.</li>
+</ul>      ]]></description>
+      <sparkle:version>4</sparkle:version>
+      <sparkle:shortVersionString>1.0.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <enclosure
+        url="https://github.com/jhaemin/christmas-tree/releases/download/v1.0.1/ChristmasTree.zip"
+        sparkle:edSignature="TjqgasbOlLQvwjdSnGI7Wmn5TqlplGLTe1YvR3O5153H/ypwPNRe7D2sLeafey/0x2ozKgaMzym1DRd3td8FBg==" length="3477530"
+        type="application/octet-stream"/>
+    </item>
   </channel>
 </rss>

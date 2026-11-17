@@ -26,13 +26,15 @@ enum TreeDesign: Int, CaseIterable, Identifiable {
     }
 
     var recipe: TreeRecipe {
-        let gold = RGB(0xD4A63A), red = RGB(0xA3121C), ivory = RGB(0xEFE6D2)
+        let gold = RGB(0xD9B96F), red = RGB(0xB82032), ivory = RGB(0xEFE6D2)
         var r = TreeRecipe(seed: UInt64(rawValue + 1))
         switch self {
         case .classic:
-            r.ornaments = [OrnamentKind(color: red, finish: .glossy), OrnamentKind(color: gold, finish: .glossy),
-                           OrnamentKind(color: RGB(0x7E0F16), finish: .matte), OrnamentKind(color: gold, finish: .glitter, size: 0.85)]
-            r.ornamentCount = 26
+            r.ornaments = [OrnamentKind(color: red, finish: .glossy), OrnamentKind(color: gold, finish: .glossy, fluted: true),
+                           OrnamentKind(color: RGB(0x811C30), finish: .glossy), OrnamentKind(color: ivory, finish: .glitter, size: 0.75)]
+            r.ornamentCount = 30
+            r.bows = RGB(0x9C1931)
+            r.lightCount = 105
             r.beads = RGB(0xF3D58A)
             r.base = .skirt(RGB(0x8E1520), trim: RGB(0xF4EFE6))
         case .snowy:
@@ -46,7 +48,7 @@ enum TreeDesign: Int, CaseIterable, Identifiable {
             r.star = .silver
             r.base = .bucket
         case .champagne:
-            r.ornaments = [OrnamentKind(color: RGB(0xE3C27A), finish: .glossy), OrnamentKind(color: ivory, finish: .matte),
+            r.ornaments = [OrnamentKind(color: RGB(0xE3C27A), finish: .glossy, fluted: true), OrnamentKind(color: ivory, finish: .matte),
                            OrnamentKind(color: RGB(0xC9A15A), finish: .glitter), OrnamentKind(color: RGB(0xF2DCA6), finish: .glossy, drop: true)]
             r.ornamentCount = 28
             r.ribbon = RibbonStyle(dark: RGB(0x7A5A22), mid: RGB(0xC9A452), light: RGB(0xF8E7B5), width: 3.2)
@@ -57,6 +59,7 @@ enum TreeDesign: Int, CaseIterable, Identifiable {
                            OrnamentKind(color: gold, finish: .glossy, size: 0.85), OrnamentKind(color: RGB(0x5A0C1C), finish: .glitter, drop: true)]
             r.ornamentCount = 26
             r.ribbon = RibbonStyle(dark: RGB(0x2E0610), mid: RGB(0x6E1024), light: RGB(0xB2384F), width: 3.4)
+            r.bows = RGB(0x75172C)
             r.base = .brass
         case .silverBlue:
             r.foliage = .deepFir

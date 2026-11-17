@@ -1,12 +1,13 @@
 #!/bin/bash
-# Builds a standalone ChristmasTree.app at build/ChristmasTree.app.
+# Builds a standalone "Christmas Tree.app" at build/Christmas Tree.app.
 #   Scripts/bundle.sh            build only
 #   Scripts/bundle.sh --install  also copy to /Applications and launch it
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-APP_NAME=ChristmasTree
-APP="build/$APP_NAME.app"
+APP_NAME=ChristmasTree               # executable and SwiftPM product
+BUNDLE_NAME="Christmas Tree"          # what Finder and the Dock show
+APP="build/$BUNDLE_NAME.app"
 
 swift build -c release
 BIN_DIR=$(swift build -c release --show-bin-path)
@@ -68,10 +69,11 @@ echo "Built $APP"
 
 if [[ "${1:-}" == "--install" ]]; then
     pkill -x "$APP_NAME" 2>/dev/null || true
-    rm -rf "/Applications/$APP_NAME.app"
+    # 1.0.0 was named ChristmasTree.app
+    rm -rf "/Applications/$APP_NAME.app" "/Applications/$BUNDLE_NAME.app"
     cp -R "$APP" /Applications/
-    open "/Applications/$APP_NAME.app"
-    echo "Installed /Applications/$APP_NAME.app"
+    open "/Applications/$BUNDLE_NAME.app"
+    echo "Installed /Applications/$BUNDLE_NAME.app"
 else
-    echo "Run:  open $APP"
+    echo "Run:  open \"$APP\""
 fi

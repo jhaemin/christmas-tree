@@ -24,7 +24,8 @@ jobs:
     runs-on: macos-26
 
     env:
-      APP: ChristmasTree
+      APP: ChristmasTree             # executable name, and the zip's name
+      BUNDLE: "Christmas Tree"       # the .app's name
       HAVE_CERT: ${{ secrets.DEVELOPER_ID_P12 != '' }}
       HAVE_NOTARY: ${{ secrets.NOTARY_KEY_P8 != '' }}
       HAVE_SPARKLE: ${{ secrets.SPARKLE_ED_PRIVATE_KEY != '' }}
@@ -107,7 +108,7 @@ jobs:
       # its first seconds.
       - name: Smoke-test the launch
         run: |
-          "build/$APP.app/Contents/MacOS/$APP" &
+          "build/$BUNDLE.app/Contents/MacOS/$APP" &
           APP_PID=$!
           sleep 5
           if ! kill -0 "$APP_PID" 2>/dev/null; then
@@ -118,7 +119,7 @@ jobs:
           kill "$APP_PID"
 
       - name: Zip app
-        run: ditto -c -k --sequesterRsrc --keepParent "build/$APP.app" "$APP.zip"
+        run: ditto -c -k --sequesterRsrc --keepParent "build/$BUNDLE.app" "$APP.zip"
 
       - name: Notarize and staple
         if: env.HAVE_CERT == 'true' && env.HAVE_NOTARY == 'true'
@@ -133,9 +134,9 @@ jobs:
             --key-id "$NOTARY_KEY_ID" \
             --issuer "$NOTARY_ISSUER_ID" \
             --wait
-          xcrun stapler staple "build/$APP.app"
-          spctl -a -t exec -vv "build/$APP.app"
-          ditto -c -k --sequesterRsrc --keepParent "build/$APP.app" "$APP.zip"
+          xcrun stapler staple "build/$BUNDLE.app"
+          spctl -a -t exec -vv "build/$BUNDLE.app"
+          ditto -c -k --sequesterRsrc --keepParent "build/$BUNDLE.app" "$APP.zip"
 
       - name: Create GitHub Release
         if: github.ref_type == 'tag'
@@ -151,13 +152,13 @@ jobs:
                 '> This build is ad-hoc signed (no Developer ID / notarization), so' \
                 '> Gatekeeper will block the first launch. After unzipping, either' \
                 '> right-click → Open, or run:' \
-                "> \`xattr -d com.apple.quarantine $APP.app\`" \
+                "> \`xattr -d com.apple.quarantine '$BUNDLE.app'\`" \
                 ''
               cat "$RUNNER_TEMP/notes.md"
             } > "$RUNNER_TEMP/notes-unsigned.md"
             NOTES_FILE="$RUNNER_TEMP/notes-unsigned.md"
           fi
-          gh release create "$GITHUB_REF_NAME" "$APP.zip#$APP.app ($VERSION)" \
+          gh release create "$GITHUB_REF_NAME" "$APP.zip#$BUNDLE.app ($VERSION)" \
             --title "Christmas Tree $GITHUB_REF_NAME" \
             --notes-file "$NOTES_FILE"
 

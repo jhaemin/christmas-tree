@@ -20,6 +20,8 @@ if let dir = argument(after: "--render-audio") {
     exit(0)
 }
 
+if BundleLocation.renameLegacyBundleIfNeeded() { exit(0) }
+
 let app = NSApplication.shared
 let delegate = MainActor.assumeIsolated { AppDelegate() }
 app.delegate = delegate

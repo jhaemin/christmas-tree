@@ -13,8 +13,8 @@ struct Foliage {
     var flock: Double = 0
     var density: Double = 1
 
-    static let fir = Foliage(stops: [RGB(0x061710), RGB(0x123821), RGB(0x255C33), RGB(0x4A8848)], tip: RGB(0x8CBF68))
-    static let deepFir = Foliage(stops: [RGB(0x04120B), RGB(0x0E2F1C), RGB(0x1D4E2C), RGB(0x3B7840)], tip: RGB(0x6FA45A))
+    static let fir = Foliage(stops: [RGB(0x071F1B), RGB(0x154535), RGB(0x347457), RGB(0x6B9D71)], tip: RGB(0xB1C794))
+    static let deepFir = Foliage(stops: [RGB(0x061A16), RGB(0x103D2F), RGB(0x286047), RGB(0x508766)], tip: RGB(0x9BBA86))
     static let spruce = Foliage(stops: [RGB(0x07171A), RGB(0x173A3A), RGB(0x2F5F5A), RGB(0x6B9A90)], tip: RGB(0xA8CBBE))
 }
 
@@ -25,6 +25,7 @@ struct OrnamentKind {
     var finish: Finish
     var size: CGFloat = 1
     var drop = false
+    var fluted = false
 }
 
 struct RibbonStyle {
@@ -48,6 +49,7 @@ struct TreeRecipe {
     var ornamentCount = 0
     var ribbon: RibbonStyle?
     var beads: RGB?
+    var bows: RGB?
     var lights: LightStyle = .warm
     var lightCount = 80
     var star: StarStyle = .gold
@@ -72,7 +74,7 @@ enum Cone {
     static func radius(_ v: Double, smooth: Bool = false) -> Double {
         let base = 0.04 + 0.96 * pow(max(0, v), 0.95)
         if smooth { return maxR * max(0, v) * 0.97 }
-        let whorl = 1 + 0.06 * sin(v * 40 + 0.8) * min(1, v * 3)
+        let whorl = 1 + 0.085 * sin(v * 38 + 0.8) * min(1, v * 3)
         return maxR * base * whorl
     }
 
@@ -118,12 +120,14 @@ final class TreeModel {
     struct Ornament { var p: CGPoint; var r: CGFloat; var kind: OrnamentKind; var seed: UInt64 }
     struct Quad { var path: Path; var color: RGB; var top: CGPoint; var bottom: CGPoint }
     struct Bead { var p: CGPoint; var r: CGFloat; var shade: Double }
-    enum Item { case spray(Spray), ornament(Ornament), ribbon(Quad), bead(Bead) }
+    struct Bow { var p: CGPoint; var size: CGFloat; var color: RGB }
+    enum Item { case spray(Spray), ornament(Ornament), ribbon(Quad), bead(Bead), bow(Bow) }
     struct Light { var v: Double; var theta: Double; var rho: Double; var tone: Int; var phase: Double; var speed: Double }
 
     let recipe: TreeRecipe
     private(set) var items: [(z: Double, item: Item)] = []
     private(set) var lights: [Light] = []
+    private var decorationSpace: [(CGPoint, CGFloat)] = []
 
     init(recipe: TreeRecipe, lod: Double) {
         self.recipe = recipe
@@ -131,11 +135,15 @@ final class TreeModel {
         if !recipe.wire {
             makeSprays(&rng, lod: lod)
             makeCrown(&rng, lod: lod)
+            // 장식과 전구는 잎의 LOD와 관계없이 같은 위치를 유지한다.
+            rng = SplitMix(state: recipe.seed &* 104729)
+            if let color = recipe.bows { makeBows(color) }
             makeOrnaments(&rng)
             if let r = recipe.ribbon { makeRibbon(r) }
             if let b = recipe.beads { makeBeads(b) }
             items.sort { $0.z < $1.z }
         }
+        rng = SplitMix(state: recipe.seed &* 15485863)
         makeLights(&rng)
     }
 
@@ -151,7 +159,7 @@ final class TreeModel {
             let len = (2.4 + 6.4 * v) * rng.range(0.75, 1.25)
             let c = cos(theta)
             let dx = len * c * 0.95
-            let dy = len * (0.2 + 0.32 * (1 - abs(c)))
+            let dy = len * (0.12 + 0.35 * (1 - abs(c))) + rng.range(-0.65, 0.65)
             let base = P(tip.x - CGFloat(dx), tip.y - CGFloat(dy))
             let ao = pow(rho, 2.2)
             var shade = 0.06 + 0.94 * ao * (0.25 + 0.75 * Cone.lambert(theta))
@@ -181,20 +189,32 @@ final class TreeModel {
                                         shade: 0.7, snow: f.snow * 0.4, seed: rng.nextRaw()))))
     }
 
+    private func makeBows(_ color: RGB) {
+        for (v, theta) in [(0.27, 1.6), (0.45, 2.4), (0.61, 0.7), (0.77, 1.95), (0.9, 0.55)] {
+            let (p, z) = Cone.project(v, theta, 1.01)
+            let size = CGFloat(1.15 + v * 1.1)
+            decorationSpace.append((P(p.x, p.y + size * 0.4), size * 1.6))
+            items.append((z + 3, .bow(Bow(p: p, size: size, color: color))))
+        }
+    }
+
     private func makeOrnaments(_ rng: inout SplitMix) {
         guard !recipe.ornaments.isEmpty else { return }
         var placed: [(CGPoint, CGFloat)] = []
         var attempts = 0
         while placed.count < recipe.ornamentCount && attempts < 4000 {
             attempts += 1
-            let kind = recipe.ornaments[Int(rng.next() * Double(recipe.ornaments.count))]
-            let v = 0.13 + 0.8 * sqrt(rng.next())
+            let kind = recipe.ornaments[placed.count % recipe.ornaments.count]
+            // 높이별로 고르게 배치해 꼭대기에도 작은 장식이 남도록 한다.
+            let band = (Double(placed.count) + rng.next()) / Double(max(1, recipe.ornamentCount))
+            let v = min(0.93, max(0.15, 0.15 + 0.78 * pow(band, 0.72) + rng.range(-0.045, 0.045)))
             let theta = Double.pi * rng.range(0.1, 0.9)
             let rho = rng.range(0.9, 0.98)
             var (p, z) = Cone.project(v, theta, rho)
             let r = CGFloat((1.35 + 1.5 * v) * rng.range(0.85, 1.15) * (0.78 + 0.22 * sin(theta))) * kind.size
             p.y += r * 0.5
             if placed.contains(where: { hypot($0.0.x - p.x, $0.0.y - p.y) < ($0.1 + r) * 1.15 + 1.2 }) { continue }
+            if decorationSpace.contains(where: { hypot($0.0.x - p.x, $0.0.y - p.y) < $0.1 + r + 0.5 }) { continue }
             placed.append((p, r))
             items.append((z + 2.6, .ornament(Ornament(p: p, r: r, kind: kind, seed: rng.nextRaw()))))
         }
@@ -288,6 +308,7 @@ final class TreeModel {
             switch entry.item {
             case .spray(let s): drawSpray(&c, s)
             case .ornament(let o): Ornaments.draw(&c, o.p, r: o.r, kind: o.kind, seed: o.seed)
+            case .bow(let b): Ornaments.bow(&c, b.p, size: b.size, color: b.color)
             case .ribbon(let q):
                 c.fill(q.path, with: .linearGradient(Gradient(stops: [
                     .init(color: q.color.scaled(0.62).color(), location: 0),
@@ -315,35 +336,40 @@ final class TreeModel {
         var body = Path(), tips = Path()
         body.move(to: s.base)
         body.addLine(to: s.tip)
-        let n = max(4, Int(len * 1.5))
+        let n = max(6, Int(len * 2.3))
         for i in 0..<n {
             let t = (CGFloat(i) + 0.5) / CGFloat(n)
             let q = P(s.base.x + dx * t, s.base.y + dy * t)
-            let nl = len * 0.33 * (1 - 0.45 * t) + 0.45
+            let nl = len * 0.27 * (1 - 0.62 * t) + 0.32
             for side in [-1.0, 1.0] {
                 let a = (1.05 - 0.35 * Double(t)) * side + rng.range(-0.14, 0.14)
                 let ca = CGFloat(cos(a)), sa = CGFloat(sin(a))
-                var vx = ux * ca - uy * sa, vy = ux * sa + uy * ca + 0.32
+                var vx = ux * ca - uy * sa, vy = ux * sa + uy * ca + 0.12
                 let m = hypot(vx, vy)
                 vx /= m; vy /= m
                 let l = nl * CGFloat(rng.range(0.8, 1.15))
                 let end = P(q.x + vx * l, q.y + vy * l)
-                if t > 0.68 { tips.move(to: q); tips.addLine(to: end) } else { body.move(to: q); body.addLine(to: end) }
+                let control = P(q.x + vx * l * 0.55, q.y + vy * l * 0.55 - l * 0.14)
+                if t > 0.68 {
+                    tips.move(to: q); tips.addQuadCurve(to: end, control: control)
+                } else {
+                    body.move(to: q); body.addQuadCurve(to: end, control: control)
+                }
             }
         }
         tips.move(to: s.tip)
         tips.addLine(to: P(s.tip.x + ux * 0.9, s.tip.y + uy * 0.9 + 0.15))
 
         var col = ramp(f.stops, s.shade)
-        var tipCol = col.mix(f.tip, 0.25 + 0.35 * s.shade)
+        var tipCol = col.mix(f.tip, 0.18 + 0.24 * s.shade)
         if f.flock > 0 {
             let w = RGB(0xF2F5F2).scaled(0.62 + 0.42 * s.shade)
             col = col.mix(w, f.flock * 0.7)
             tipCol = tipCol.mix(w, f.flock * 0.95)
         }
         let under = f.stops[0].scaled(0.6).color(0.42)
-        let wide = StrokeStyle(lineWidth: 0.72, lineCap: .round)
-        let thin = StrokeStyle(lineWidth: 0.4, lineCap: .round)
+        let wide = StrokeStyle(lineWidth: 0.43, lineCap: .round)
+        let thin = StrokeStyle(lineWidth: 0.22, lineCap: .round)
         c.stroke(body, with: .color(under), style: wide)
         c.stroke(tips, with: .color(under), style: wide)
         c.stroke(body, with: .color(col.color()), style: thin)
@@ -440,7 +466,7 @@ final class TreeModel {
         drawLights(&c, t)
         let starCenter = P(Cone.cx, Cone.top - 3.6)
         if recipe.star != .none { Stars.collar(&c, recipe.star, top: starCenter.y + 1.6, bottom: Cone.top + 2.2) }
-        Stars.draw(&c, recipe.star, center: starCenter, r: 7.2, t: t)
+        Stars.draw(&c, recipe.star, center: starCenter, r: 6.4, t: t)
     }
 
     private func drawLights(_ c: inout GC, _ t: Double) {
@@ -491,6 +517,47 @@ final class TreeModel {
 // MARK: - 오너먼트
 
 enum Ornaments {
+    /// 금색 테두리와 접힌 꼬리가 있는 작은 벨벳 리본.
+    static func bow(_ c: inout GC, _ p: CGPoint, size s: CGFloat, color: RGB) {
+        Kit.softDisc(&c, P(p.x + s * 0.3, p.y + s * 0.7), r: s * 2.3, color: .black, alpha: 0.3)
+        let edge = RGB(0xE5C88B)
+        for side: CGFloat in [-1, 1] {
+            var tail = Path()
+            tail.move(to: p)
+            tail.addQuadCurve(to: P(p.x + side * s * 1.0, p.y + s * 2.3),
+                              control: P(p.x + side * s * 0.25, p.y + s * 1.5))
+            tail.addLines([P(p.x + side * s * 0.48, p.y + s * 2.05),
+                           P(p.x + side * s * 0.05, p.y + s * 2.4),
+                           P(p.x - side * s * 0.25, p.y + s * 0.3)])
+            tail.closeSubpath()
+            c.fill(tail, with: .linearGradient(Gradient(colors: [color.scaled(0.55).color(), color.color(), color.scaled(0.6).color()]),
+                                               startPoint: p, endPoint: P(p.x, p.y + s * 2.4)))
+            c.stroke(tail, with: .color(edge.color(0.6)), lineWidth: 0.1)
+            var loop = Path()
+            loop.move(to: p)
+            loop.addCurve(to: P(p.x + side * s * 1.7, p.y - s * 0.7),
+                          control1: P(p.x + side * s * 0.7, p.y - s * 0.8),
+                          control2: P(p.x + side * s * 1.7, p.y - s * 1.25))
+            loop.addCurve(to: p, control1: P(p.x + side * s * 2.1, p.y + s * 0.85),
+                          control2: P(p.x + side * s * 0.65, p.y + s * 0.45))
+            c.fill(loop, with: .linearGradient(Gradient(stops: [
+                .init(color: color.mix(RGB(0xF6B9A5), 0.4).color(), location: 0),
+                .init(color: color.color(), location: 0.45),
+                .init(color: color.scaled(0.45).color(), location: 1),
+            ]), startPoint: P(p.x, p.y - s), endPoint: P(p.x, p.y + s * 0.6)))
+            c.stroke(loop, with: .color(edge.color(0.75)), style: StrokeStyle(lineWidth: 0.12, lineJoin: .round))
+            var crease = Path()
+            crease.move(to: P(p.x + side * s * 0.25, p.y))
+            crease.addQuadCurve(to: P(p.x + side * s * 1.4, p.y - s * 0.25),
+                                control: P(p.x + side * s * 0.85, p.y - s * 0.4))
+            c.stroke(crease, with: .color(color.scaled(0.35).color(0.7)), lineWidth: 0.17)
+        }
+        c.fill(Path(roundedRect: CGRect(x: p.x - s * 0.3, y: p.y - s * 0.3, width: s * 0.6, height: s * 0.65),
+                    cornerRadius: s * 0.13),
+               with: .linearGradient(Gradient(colors: [edge.color(), color.color(), color.scaled(0.6).color()]),
+                                     startPoint: P(p.x - s * 0.3, p.y), endPoint: P(p.x + s * 0.3, p.y)))
+    }
+
     static func dropPath(_ p: CGPoint, _ r: CGFloat) -> Path {
         let k: CGFloat = 0.5523
         return Path { path in
@@ -526,6 +593,18 @@ enum Ornaments {
 
         var inner = c
         inner.clip(to: body)
+        if k.fluted {
+            for i in -3...3 {
+                let x = CGFloat(i) / 4
+                var rib = Path()
+                rib.move(to: P(p.x + x * r * 0.24, p.y - r))
+                rib.addCurve(to: P(p.x + x * r * 0.22, p.y + r * (k.drop ? 1.8 : 1)),
+                             control1: P(p.x + x * r * 1.45, p.y - r * 0.5),
+                             control2: P(p.x + x * r * 1.45, p.y + r * 0.6))
+                inner.stroke(rib, with: .color(k.color.scaled(0.35).color(0.45)), lineWidth: r * 0.08)
+                inner.stroke(rib, with: .color(RGB(0xFFF1CF).color(0.4)), lineWidth: r * 0.025)
+            }
+        }
         // 아래쪽 반사광
         Kit.softDisc(&inner, P(p.x + r * 0.5, p.y + r * 0.7), r: r * 0.75, color: k.color.mix(.white, 0.35).color(), alpha: 0.4)
         switch k.finish {

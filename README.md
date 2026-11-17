@@ -35,8 +35,8 @@ Dock 아이콘 없이 메뉴 막대에서만 동작합니다. 종료는 메뉴�
 macOS 26 이상, Xcode 26 이상(macOS 26 SDK)에서:
 
 ```bash
-Scripts/bundle.sh            # build/ChristmasTree.app 생성
-open build/ChristmasTree.app
+Scripts/bundle.sh            # "build/Christmas Tree.app" 생성
+open "build/Christmas Tree.app"
 
 Scripts/bundle.sh --install  # /Applications 에 설치하고 실행
 ```

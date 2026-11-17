@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.0.1
+
+### Added
+
+- Velvet bows with gold edges on Classic Red & Gold and Burgundy Velvet.
+- Fluted ornaments on Classic Red & Gold and Champagne Gold.
+
+### Changed
+
+- Finer, softer needles and a fresher green, so the branches look more like a real fir.
+- Ornaments are spread evenly from the bottom of the tree to the top, with small ones near the tip, and keep the same places at every tree size.
+- Classic Red & Gold has more lights and new ornament colors, and every star is a little smaller.
+- The app is now called "Christmas Tree" in Finder, Launchpad, and the Dock (it was "ChristmasTree"). Copies updated from 1.0.0 rename themselves on their next launch.
+
 ## 1.0.0
 
 The first release.
